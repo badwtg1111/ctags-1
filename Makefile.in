@@ -38,7 +38,7 @@ endif
 DEFS	= @DEFS@
 CPPFLAGS = @CPPFLAGS@
 CFLAGS	= @CFLAGS@
-LDFLAGS	= @LDFLAGS@
+LDFLAGS	= @LDFLAGS@ $(COVERAGE_LDFLAGS)
 LIBOBJS = @LIBOBJS@
 LIBS	= @LIBS@
 EXEEXT	= @EXEEXT@
@@ -59,7 +59,12 @@ TINST_ROOT=tinst-root
 #CFLAGS	= -O
 #LDFLAGS=
 
-ALL_CFLAGS = $(CFLAGS) -Wall
+ifdef COVERAGE
+COVERAGE_CFLAGS=--coverage
+COVERAGE_LDFLAGS=--coverage
+endif
+
+ALL_CFLAGS = $(CFLAGS) -Wall $(COVERAGE_CFLAGS)
 
 DEBUG_CPPFLAGS ?= -DDEBUG
 ALL_CPPFLAGS = $(CPPFLAGS)			\
@@ -339,6 +344,8 @@ TAGS: $(CTAGS_EXEC)
 clean: clean-units
 	rm -f $(OBJECTS) $(CTAGS_EXEC) tags TAGS $(READ_LIB) 
 	rm -f etyperef$(EXEEXT) etyperef.$(OBJEXT)
+	rm -f $(SOURCES:.c=.gcda)
+	rm -f *.gcov
 
 mostlyclean: clean
 
@@ -442,5 +449,9 @@ tmain: $(CTAGS_TEST)
 tinst:
 	rm -rf $$(pwd)/$(TINST_ROOT)
 	$(SHELL) misc/tinst $$(pwd)/$(TINST_ROOT)
+
+coverage:
+	$(CTAGS_TEST) -o - $$(find ./Units -name 'input.*'| grep -v '.*b/.*') > /dev/null
+	gcov $$(find -name '*.gcda')
 
 # vi:set tabstop=8:
